@@ -92,6 +92,9 @@ data/
 # File uploads directory
 uploads/
 
+# Test uploads directory
+test-uploads/
+
 # Application logs
 logs/
 *.log

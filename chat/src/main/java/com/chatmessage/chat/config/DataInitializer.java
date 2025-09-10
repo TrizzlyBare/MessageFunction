@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.chatmessage.chat.model.Room;
 import com.chatmessage.chat.model.User;
@@ -12,11 +13,18 @@ import com.chatmessage.chat.service.RoomService;
 import com.chatmessage.chat.service.UserService;
 
 @Configuration
+@Profile("!test")
 public class DataInitializer {
 
     @Bean
     public CommandLineRunner initData(UserService userService, RoomService roomService) {
         return args -> {
+            // Check if data already exists to avoid duplicate creation
+            if (!userService.getAllUsers().isEmpty()) {
+                System.out.println("Data already exists, skipping initialization.");
+                return;
+            }
+            
             // Create some users
             User user1 = userService.createUser("john");
             User user2 = userService.createUser("alice");
