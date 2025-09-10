@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +27,11 @@ public class MessageController {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageController.class);
     private final MessageService messageService;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public MessageController(MessageService messageService) {
+    public MessageController(MessageService messageService, SimpMessagingTemplate messagingTemplate) {
         this.messageService = messageService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -76,6 +79,11 @@ public class MessageController {
             logger.info("Sending message from user {} to room {}", userId, roomId);
 
             Message message = messageService.sendMessage(userId, roomId, messageContent, image);
+
+            // Broadcast the new message to all subscribers of this room via WebSocket
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+            logger.info("Message broadcasted to WebSocket subscribers for room {}", roomId);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(message);
         } catch (IllegalArgumentException e) {
             logger.error("Bad request: {}", e.getMessage());

@@ -45,20 +45,39 @@
 
         .tool-card {
             background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+            border: 2px solid transparent;
         }
 
         .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-            text-decoration: none;
-            color: inherit;
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .tool-card.featured {
+            border: 2px solid #28a745;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f8fff8 100%);
+        }
+
+        .tool-card.featured .tool-icon {
+            font-size: 3.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         .tool-icon {
@@ -185,53 +204,26 @@
         <p class="subtitle">Multimedia Messaging System with Security Features</p>
 
         <div class="tools-grid">
-            <a href="/message-viewer.html" class="tool-card">
-                <div class="tool-icon">💬</div>
-                <div class="tool-title">Message Viewer</div>
-                <div class="tool-description">View messages in chat rooms</div>
-                <ul class="tool-features">
-                    <li>Real-time message display</li>
-                    <li>Room-based organization</li>
-                    <li>Image message support</li>
-                    <li>Auto-refresh every 5 seconds</li>
-                </ul>
-            </a>
+            <div class="tool-card">
+                <div class="tool-icon">👁️</div>
+                <h3>Message Viewer</h3>
+                <p>View messages with manual refresh</p>
+                <a href="message-viewer.html" class="btn">Open Viewer</a>
+            </div>
 
-            <a href="/message-tester.html" class="tool-card">
-                <div class="tool-icon">📝</div>
-                <div class="tool-title">Message Sender</div>
-                <div class="tool-description">Send messages with text and images</div>
-                <ul class="tool-features">
-                    <li>Text + image messages</li>
-                    <li>Room selection interface</li>
-                    <li>Image preview</li>
-                    <li>Response feedback</li>
-                </ul>
-            </a>
+            <div class="tool-card featured">
+                <div class="tool-icon">⚡</div>
+                <h3>Real-time Viewer</h3>
+                <p>Live message updates with WebSocket</p>
+                <a href="realtime-viewer.html" class="btn">Open Real-time</a>
+            </div>
 
-            <a href="/upload-examples.html" class="tool-card">
+            <div class="tool-card">
                 <div class="tool-icon">📤</div>
-                <div class="tool-title">Upload Examples</div>
-                <div class="tool-description">Test different upload scenarios</div>
-                <ul class="tool-features">
-                    <li>Simple file upload</li>
-                    <li>Text + file combination</li>
-                    <li>Full message testing</li>
-                    <li>Multiple test forms</li>
-                </ul>
-            </a>
-
-            <a href="/swagger-ui.html" class="tool-card">
-                <div class="tool-icon">📋</div>
-                <div class="tool-title">API Documentation</div>
-                <div class="tool-description">Interactive API documentation</div>
-                <ul class="tool-features">
-                    <li>Complete API reference</li>
-                    <li>Interactive testing</li>
-                    <li>Request/response examples</li>
-                    <li>Parameter descriptions</li>
-                </ul>
-            </a>
+                <h3>Message Tester</h3>
+                <p>Send messages with text and images</p>
+                <a href="message-tester.html" class="btn">Open Tester</a>
+            </div>
         </div>
 
         <div class="api-section">

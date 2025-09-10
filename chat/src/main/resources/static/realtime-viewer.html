@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Message Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .connected {
+            background: rgba(76, 175, 80, 0.8);
+        }
+
+        .disconnected {
+            background: rgba(244, 67, 54, 0.8);
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 80px;
+        }
+
+        select,
+        input {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .room-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .messages-container {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .message {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.new-message {
+            background: #e8f5e8;
+            border-left: 4px solid #28a745;
+            animation: newMessagePulse 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes newMessagePulse {
+            0% {
+                background: #28a745;
+            }
+
+            50% {
+                background: #e8f5e8;
+            }
+
+            100% {
+                background: #e8f5e8;
+            }
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .sender {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .message-content {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .message-image {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .message-image:hover {
+            transform: scale(1.05);
+        }
+
+        .auto-refresh-info {
+            text-align: center;
+            color: #28a745;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 8px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 Real-time Message Viewer</h1>
+            <div id="connectionStatus" class="connection-status disconnected">
+                🔴 Disconnected
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="userId">User:</label>
+                <select id="userId">
+                    <option value="default-user">Default User</option>
+                </select>
+
+                <label for="roomId">Room:</label>
+                <select id="roomId">
+                    <option value="">Select a room...</option>
+                </select>
+
+                <button onclick="loadMessages()" id="loadBtn">Load Messages</button>
+                <button onclick="connectWebSocket()" id="connectBtn">Connect Real-time</button>
+                <button onclick="disconnectWebSocket()" id="disconnectBtn" disabled>Disconnect</button>
+            </div>
+
+            <div id="roomInfo" class="room-info" style="display: none;">
+                <strong>Room:</strong> <span id="roomName"></span> |
+                <strong>Members:</strong> <span id="memberCount"></span>
+            </div>
+        </div>
+
+        <div class="messages-container">
+            <div class="auto-refresh-info">
+                🔄 Real-time updates enabled - new messages will appear automatically!
+            </div>
+            <div id="messages"></div>
+        </div>
+    </div>
+
+    <!-- Include SockJS and STOMP libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+    <script>
+        let stompClient = null;
+        let currentRoomId = null;
+        let isConnected = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function () {
+            loadUsers();
+            loadRooms();
+        });
+
+        // Load users from API
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+
+                const userSelect = document.getElementById('userId');
+                userSelect.innerHTML = '<option value="default-user">Default User</option>';
+
+                users.forEach(user => {
+                    if (user.userId !== 'default-user') {
+                        const option = document.createElement('option');
+                        option.value = user.userId;
+                        option.textContent = `${user.username} (${user.userId})`;
+                        userSelect.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Load rooms from API
+        async function loadRooms() {
+            try {
+                const userId = document.getElementById('userId').value;
+                const response = await fetch(`/api/rooms?userId=${userId}`);
+                const rooms = await response.json();
+
+                const roomSelect = document.getElementById('roomId');
+                roomSelect.innerHTML = '<option value="">Select a room...</option>';
+
+                rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.roomId;
+                    option.textContent = `${room.roomName} (${room.members.length} members)`;
+                    option.dataset.roomName = room.roomName;
+                    option.dataset.memberCount = room.members.length;
+                    roomSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+                showError('Failed to load rooms. Please try again.');
+            }
+        }
+
+        // Update room list when user changes
+        document.getElementById('userId').addEventListener('change', loadRooms);
+
+        // Connect to WebSocket
+        function connectWebSocket() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                alert('Please select a room first');
+                return;
+            }
+
+            const socket = new SockJS('/ws');
+            stompClient = new StompJs.Client({
+                webSocketFactory: () => socket,
+                onConnect: () => {
+                    console.log('Connected to WebSocket');
+                    isConnected = true;
+                    updateConnectionStatus(true);
+                    currentRoomId = roomId;
+
+                    // Subscribe to room messages
+                    stompClient.subscribe(`/topic/room/${roomId}`, (message) => {
+                        const newMessage = JSON.parse(message.body);
+                        displayNewMessage(newMessage);
+                    });
+
+                    // Load existing messages
+                    loadMessages();
+                },
+                onDisconnect: () => {
+                    console.log('Disconnected from WebSocket');
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                },
+                onStompError: (frame) => {
+                    console.error('Broker reported error: ' + frame.headers['message']);
+                    console.error('Additional details: ' + frame.body);
+                }
+            });
+
+            stompClient.activate();
+        }
+
+        // Disconnect from WebSocket
+        function disconnectWebSocket() {
+            if (stompClient) {
+                stompClient.deactivate();
+                stompClient = null;
+                currentRoomId = null;
+            }
+        }
+
+        // Update connection status UI
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            if (connected) {
+                statusElement.textContent = '🟢 Connected';
+                statusElement.className = 'connection-status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                statusElement.textContent = '🔴 Disconnected';
+                statusElement.className = 'connection-status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        // Load messages for selected room
+        async function loadMessages() {
+            const userId = document.getElementById('userId').value;
+            const roomId = document.getElementById('roomId').value;
+
+            if (!roomId) {
+                showError('Please select a room first');
+                return;
+            }
+
+            // Update room info
+            updateRoomInfo();
+
+            try {
+                showLoading();
+                const response = await fetch(`/api/rooms/${roomId}/messages?userId=${userId}`);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load messages');
+                }
+
+                const messages = await response.json();
+                displayMessages(messages);
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                showError(`Failed to load messages: ${error.message}`);
+            }
+        }
+
+        // Update room information display
+        function updateRoomInfo() {
+            const roomSelect = document.getElementById('roomId');
+            const selectedOption = roomSelect.selectedOptions[0];
+
+            if (selectedOption && selectedOption.value) {
+                document.getElementById('roomName').textContent = selectedOption.dataset.roomName;
+                document.getElementById('memberCount').textContent = selectedOption.dataset.memberCount;
+                document.getElementById('roomInfo').style.display = 'block';
+            } else {
+                document.getElementById('roomInfo').style.display = 'none';
+            }
+        }
+
+        // Display messages in the UI
+        function displayMessages(messages) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+
+            if (messages.length === 0) {
+                messagesDiv.innerHTML = '<div class="no-messages">No messages in this room yet. Be the first to send one! 💬</div>';
+                return;
+            }
+
+            messages.forEach(message => {
+                const messageElement = createMessageElement(message);
+                messagesDiv.appendChild(messageElement);
+            });
+
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Display a new message (real-time)
+        function displayNewMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+
+            // Remove "no messages" placeholder if it exists
+            const noMessages = messagesDiv.querySelector('.no-messages');
+            if (noMessages) {
+                noMessages.remove();
+            }
+
+            const messageElement = createMessageElement(message, true);
+            messagesDiv.appendChild(messageElement);
+
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Remove new message highlighting after 3 seconds
+            setTimeout(() => {
+                messageElement.classList.remove('new-message');
+            }, 3000);
+        }
+
+        // Create a message element
+        function createMessageElement(message, isNew = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isNew ? 'new-message' : ''}`;
+
+            const timestamp = new Date(message.timestamp).toLocaleString();
+
+            let imageHtml = '';
+            if (message.imageUrl) {
+                imageHtml = `<img src="${message.imageUrl}" alt="Message image" class="message-image" onclick="window.open('${message.imageUrl}', '_blank')">`;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="sender">${message.senderId}</span>
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                ${message.content ? `<div class="message-content">${escapeHtml(message.content)}</div>` : ''}
+                ${imageHtml}
+            `;
+
+            return messageDiv;
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show loading state
+        function showLoading() {
+            document.getElementById('messages').innerHTML = '<div class="loading">Loading messages... ⏳</div>';
+        }
+
+        // Show error message
+        function showError(message) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+        }
+
+        // Auto-connect when room is selected
+        document.getElementById('roomId').addEventListener('change', function () {
+            if (this.value && !isConnected) {
+                setTimeout(() => {
+                    if (confirm('Would you like to connect to real-time updates for this room?')) {
+                        connectWebSocket();
+                    } else {
+                        loadMessages();
+                    }
+                }, 100);
+            } else if (this.value && isConnected && currentRoomId !== this.value) {
+                // Reconnect to new room
+                disconnectWebSocket();
+                setTimeout(() => connectWebSocket(), 500);
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function () {
+            disconnectWebSocket();
+        });
+    </script>
+</body>
+
+</html>

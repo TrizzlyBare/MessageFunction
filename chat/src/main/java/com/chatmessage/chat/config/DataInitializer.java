@@ -24,7 +24,7 @@ public class DataInitializer {
                 System.out.println("Data already exists, skipping initialization.");
                 return;
             }
-            
+
             // Create some users
             User user1 = userService.createUser("john");
             User user2 = userService.createUser("alice");
