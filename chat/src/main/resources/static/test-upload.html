@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        #imagePreview {
+            margin-top: 10px;
+            max-width: 300px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Upload Test</h1>
+    
+    <div class="form-container">
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="file">Select Image:</label>
+                <input type="file" id="file" name="file" accept="image/*" onchange="previewImage()">
+                <img id="imagePreview" src="#" alt="Image Preview">
+            </div>
+            
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+    
+    <h2>Response:</h2>
+    <div class="response" id="response">
+        <p>Response will appear here</p>
+    </div>
+    
+    <script>
+        // Preview the selected image
+        function previewImage() {
+            const file = document.getElementById('file').files[0];
+            const preview = document.getElementById('imagePreview');
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                document.getElementById('response').innerHTML = 
+                    `<p style="color: red">Please select a file</p>`;
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Send the file
+            fetch('http://localhost:8080/api/test/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let html = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                // If upload was successful and we have a fileUrl, display the image
+                if (data.fileUrl) {
+                    html += `<h3>Uploaded Image:</h3>
+                             <img src="${data.fileUrl}" alt="Uploaded image" style="max-width: 100%;">`;
+                }
+                
+                document.getElementById('response').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('response').innerHTML = 
+                    `<p style="color: red">Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
