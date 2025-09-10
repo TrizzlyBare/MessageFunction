@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,19 +12,24 @@
             margin: 0 auto;
             padding: 20px;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input[type="text"], textarea {
+
+        input[type="text"],
+        textarea {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
         }
+
         button {
             background-color: #4CAF50;
             color: white;
@@ -33,9 +39,11 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
         .response {
             margin-top: 20px;
             padding: 10px;
@@ -43,6 +51,7 @@
             border-radius: 4px;
             background-color: #f9f9f9;
         }
+
         h2 {
             margin-top: 30px;
             border-bottom: 1px solid #ddd;
@@ -50,108 +59,110 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Message Sender Test</h1>
-    
+
     <div class="form-container">
         <form id="messageForm">
             <div class="form-group">
                 <label for="userId">User ID:</label>
                 <input type="text" id="userId" name="userId" value="default-user">
             </div>
-            
+
             <div class="form-group">
                 <label for="roomId">Room ID:</label>
                 <input type="text" id="roomId" name="roomId" required>
             </div>
-            
+
             <div class="form-group">
                 <label for="content">Message:</label>
                 <textarea id="content" name="content" rows="3" required></textarea>
             </div>
-            
+
             <div class="form-group">
                 <label for="image">Image (optional):</label>
                 <input type="file" id="image" name="image" accept="image/*">
             </div>
-            
+
             <button type="submit">Send Message</button>
         </form>
     </div>
-    
+
     <h2>Response:</h2>
     <div class="response" id="response">
         <p>Response will appear here</p>
     </div>
-    
+
     <h2>Available Rooms:</h2>
     <div id="roomsList">Loading rooms...</div>
-    
+
     <script>
         // Load available rooms when page loads
         window.addEventListener('DOMContentLoaded', () => {
             fetchRooms();
         });
-        
+
         // Handle form submission
-        document.getElementById('messageForm').addEventListener('submit', function(e) {
+        document.getElementById('messageForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const userId = document.getElementById('userId').value;
             const roomId = document.getElementById('roomId').value;
             const content = document.getElementById('content').value;
             const imageFile = document.getElementById('image').files[0];
-            
+
             const formData = new FormData();
             formData.append('userId', userId);
             formData.append('roomId', roomId);
             formData.append('content', content);
-            
+
             if (imageFile) {
                 formData.append('image', imageFile);
             }
-            
+
             // Send the message
             fetch('http://localhost:8080/api/messages', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('response').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            })
-            .catch(error => {
-                document.getElementById('response').innerHTML = 
-                    `<p style="color: red">Error: ${error.message}</p>`;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').innerHTML =
+                        `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    document.getElementById('response').innerHTML =
+                        `<p style="color: red">Error: ${error.message}</p>`;
+                });
         });
-        
+
         // Fetch and display available rooms
         function fetchRooms() {
             fetch('http://localhost:8080/api/rooms/all')
-            .then(response => response.json())
-            .then(rooms => {
-                const roomsList = document.getElementById('roomsList');
-                if (rooms.length === 0) {
-                    roomsList.innerHTML = '<p>No rooms available</p>';
-                } else {
-                    let html = '<ul>';
-                    rooms.forEach(room => {
-                        html += `<li>
+                .then(response => response.json())
+                .then(rooms => {
+                    const roomsList = document.getElementById('roomsList');
+                    if (rooms.length === 0) {
+                        roomsList.innerHTML = '<p>No rooms available</p>';
+                    } else {
+                        let html = '<ul>';
+                        rooms.forEach(room => {
+                            html += `<li>
                             <strong>${room.roomName}</strong> (ID: ${room.roomId})<br>
                             Members: ${room.members.join(', ')}
                         </li>`;
-                    });
-                    html += '</ul>';
-                    roomsList.innerHTML = html;
-                }
-            })
-            .catch(error => {
-                document.getElementById('roomsList').innerHTML = 
-                    `<p style="color: red">Error loading rooms: ${error.message}</p>`;
-            });
+                        });
+                        html += '</ul>';
+                        roomsList.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('roomsList').innerHTML =
+                        `<p style="color: red">Error loading rooms: ${error.message}</p>`;
+                });
         }
     </script>
 </body>
+
 </html>

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,33 +33,58 @@ public class MessageController {
 
     /**
      * Endpoint to send a new message with optional image attachment
-     * 
+     *
      * @param userId The ID of the user sending the message
      * @param roomId The ID of the room where the message will be sent
-     * @param content The text content of the message
-     * @param image Optional image file to attach to the message
+     * @param content The text content of the message (optional if image is
+     * provided)
+     * @param image Optional image file to attach to the message (required if
+     * content is empty)
      * @return The created message with status 201
      */
-    @PostMapping(value = "/messages", consumes = { "multipart/form-data" })
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "multipart/form-data"))
-    @io.swagger.v3.oas.annotations.Operation(summary = "Send a new message with optional image attachment")
+    @PostMapping(value = "/messages", consumes = {"multipart/form-data"})
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "Send a new message with text, image, or both",
+            description = "Sends a message to a chat room. Either text content, image, or both must be provided."
+    )
     public ResponseEntity<?> sendMessage(
+            @io.swagger.v3.oas.annotations.Parameter(description = "User ID sending the message")
             @RequestParam(value = "userId", defaultValue = "default-user") String userId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Room ID where the message will be sent", required = true)
             @RequestParam("roomId") String roomId,
-            @RequestParam("content") String content,
-            @io.swagger.v3.oas.annotations.Parameter(description = "Image file to upload", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "multipart/form-data"))
-            @RequestParam(value = "image", required = false) MultipartFile image) {
+            @io.swagger.v3.oas.annotations.Parameter(description = "Text content of the message (optional if image is provided)")
+            @RequestParam(value = "content", required = false) String content,
+            @io.swagger.v3.oas.annotations.Parameter(
+                    description = "Image file to upload (required if content is empty)",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")
+            )
+            @RequestPart(value = "image", required = false) MultipartFile image) {
 
         try {
+            logger.info("Received message request - userId: {}, roomId: {}, content: {}, image: {}",
+                    userId, roomId, content, (image != null ? image.getOriginalFilename() : "null"));
+
+            if ((content == null || content.trim().isEmpty()) && (image == null || image.isEmpty())) {
+                logger.warn("Both content and image are empty");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error",
+                        "Either message content or image must be provided"));
+            }
+
+            // Use empty string if content is null
+            String messageContent = (content != null) ? content : "";
+
             logger.info("Sending message from user {} to room {}", userId, roomId);
 
-            Message message = messageService.sendMessage(userId, roomId, content, image);
+            Message message = messageService.sendMessage(userId, roomId, messageContent, image);
             return ResponseEntity.status(HttpStatus.CREATED).body(message);
         } catch (IllegalArgumentException e) {
+            logger.error("Bad request: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
+            logger.error("Failed to process image: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to process image"));
         } catch (Exception e) {
+            logger.error("Internal server error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }

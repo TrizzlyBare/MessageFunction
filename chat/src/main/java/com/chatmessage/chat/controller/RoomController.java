@@ -1,5 +1,6 @@
 package com.chatmessage.chat.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +99,38 @@ public class RoomController {
             return ResponseEntity.ok(rooms);
         } catch (Exception e) {
             logger.error("Error getting all rooms: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Debug endpoint to get membership summary
+     */
+    @GetMapping("/membership-summary")
+    public ResponseEntity<?> getMembershipSummary() {
+        logger.info("Received request to get membership summary");
+
+        try {
+            List<Room> rooms = roomService.getAllRooms();
+            Map<String, Object> summary = new HashMap<>();
+
+            // Create room summary
+            List<Map<String, Object>> roomSummary = new java.util.ArrayList<>();
+            for (Room room : rooms) {
+                Map<String, Object> roomInfo = new HashMap<>();
+                roomInfo.put("roomId", room.getRoomId());
+                roomInfo.put("roomName", room.getRoomName());
+                roomInfo.put("memberCount", room.getMembers().size());
+                roomInfo.put("members", room.getMembers());
+                roomSummary.add(roomInfo);
+            }
+
+            summary.put("rooms", roomSummary);
+            summary.put("totalRooms", rooms.size());
+
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            logger.error("Error getting membership summary: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }

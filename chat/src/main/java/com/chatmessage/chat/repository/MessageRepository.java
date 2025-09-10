@@ -1,37 +1,19 @@
 package com.chatmessage.chat.repository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.chatmessage.chat.model.Message;
 
 @Repository
-public class MessageRepository {
+public interface MessageRepository extends JpaRepository<Message, String> {
 
-    // In-memory store for messages, replace with database implementation in production
-    private final Map<String, Message> messages = new ConcurrentHashMap<>();
+    @Query("SELECT m FROM Message m WHERE m.roomId = :roomId ORDER BY m.timestamp ASC")
+    List<Message> findByRoomIdOrderByTimestamp(@Param("roomId") String roomId);
 
-    public Message save(Message message) {
-        messages.put(message.getMessageId(), message);
-        return message;
-    }
-
-    public Message findById(String messageId) {
-        return messages.get(messageId);
-    }
-
-    public List<Message> findByRoomId(String roomId) {
-        return messages.values().stream()
-                .filter(message -> message.getRoomId().equals(roomId))
-                .collect(Collectors.toList());
-    }
-
-    public List<Message> findAll() {
-        return new ArrayList<>(messages.values());
-    }
+    List<Message> findByRoomId(String roomId);
 }

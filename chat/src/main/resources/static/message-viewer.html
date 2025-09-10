@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            padding: 20px;
+            margin: 0;
+            background: #2c3e50;
+            color: white;
+            font-size: 18px;
+        }
+
+        .room-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .room-item {
+            padding: 15px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .room-item:hover {
+            background: #e9ecef;
+        }
+
+        .room-item.active {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .room-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .room-members {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: #343a40;
+            color: white;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .chat-header .room-info {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sender-id {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .message-content {
+            color: #212529;
+            line-height: 1.4;
+        }
+
+        .message-image {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .message-image img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Chat Rooms</h2>
+        <div class="room-list" id="roomList">
+            <div class="loading">Loading rooms...</div>
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-header">
+            <h3 id="roomTitle">Select a room to view messages</h3>
+            <div class="room-info" id="roomInfo"></div>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="no-messages">
+                Select a room from the sidebar to view messages
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rooms = [];
+        let selectedRoom = null;
+        let messages = [];
+
+        // Load rooms when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            loadRooms();
+        });
+
+        async function loadRooms() {
+            try {
+                const response = await fetch('/api/rooms/all');
+                rooms = await response.json();
+                displayRooms(rooms);
+            } catch (error) {
+                document.getElementById('roomList').innerHTML =
+                    '<div class="error-message">Error loading rooms: ' + error.message + '</div>';
+            }
+        }
+
+        function displayRooms(rooms) {
+            const roomList = document.getElementById('roomList');
+
+            if (!rooms || rooms.length === 0) {
+                roomList.innerHTML = '<div class="no-messages">No rooms available</div>';
+                return;
+            }
+
+            let html = '';
+            rooms.forEach(room => {
+                html += `
+                    <div class="room-item" data-room-id="${room.roomId}" onclick="selectRoom('${room.roomId}')">
+                        <div class="room-name">${room.roomName}</div>
+                        <div class="room-members">${room.members ? room.members.length : 0} members</div>
+                    </div>
+                `;
+            });
+
+            roomList.innerHTML = html;
+        }
+
+        async function selectRoom(roomId) {
+            // Update UI to show selected room
+            document.querySelectorAll('.room-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-room-id="${roomId}"]`).classList.add('active');
+
+            // Find the room
+            selectedRoom = rooms.find(r => r.roomId === roomId);
+
+            if (selectedRoom) {
+                // Update header
+                document.getElementById('roomTitle').textContent = selectedRoom.roomName;
+                document.getElementById('roomInfo').innerHTML =
+                    `${selectedRoom.members ? selectedRoom.members.length : 0} members • Room ID: ${roomId}
+                     <button class="refresh-btn" onclick="loadMessages('${roomId}')">Refresh</button>`;
+
+                // Load messages
+                await loadMessages(roomId);
+            }
+        }
+
+        async function loadMessages(roomId) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '<div class="loading">Loading messages...</div>';
+
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/messages?userId=default-user`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                messages = await response.json();
+                displayMessages(messages);
+            } catch (error) {
+                container.innerHTML =
+                    '<div class="error-message">Error loading messages: ' + error.message + '</div>';
+            }
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div class="no-messages">No messages in this room yet</div>';
+                return;
+            }
+
+            let html = '';
+            messages.forEach(message => {
+                const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'Unknown time';
+                const content = message.content || '';
+
+                html += `
+                    <div class="message">
+                        <div class="message-header">
+                            <span class="sender-id">${message.senderId || 'Unknown'}</span>
+                            <span class="timestamp">${timestamp}</span>
+                        </div>
+                        ${content ? `<div class="message-content">${escapeHtml(content)}</div>` : ''}
+                        ${message.imageUrl ? `
+                            <div class="message-image">
+                                <img src="${message.imageUrl}" alt="Message image" 
+                                     onerror="this.style.display='none'; this.nextSibling.style.display='block'">
+                                <div style="display:none; color: #dc3545;">Image could not be loaded</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-refresh messages every 5 seconds if a room is selected
+        setInterval(() => {
+            if (selectedRoom) {
+                loadMessages(selectedRoom.roomId);
+            }
+        }, 5000);
+    </script>
+</body>
+
+</html>

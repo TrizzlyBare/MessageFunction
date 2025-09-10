@@ -1,29 +1,35 @@
 package com.chatmessage.chat.model;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.Data;
+import jakarta.persistence.Table;
 
-@Data
 @Entity
+@Table(name = "messages")
 public class Message {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     private String messageId;
+
+    @Column(nullable = false)
     private String senderId;
+
+    @Column(nullable = false)
     private String roomId;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
+
     private String imageUrl;
-    private Date timestamp;
+
+    @Column(nullable = false)
+    private LocalDateTime timestamp;
 
     public Message() {
-        this.timestamp = new Date();
+        this.timestamp = LocalDateTime.now();
     }
 
     public Message(String messageId, String senderId, String roomId, String content, String imageUrl) {
@@ -32,9 +38,10 @@ public class Message {
         this.roomId = roomId;
         this.content = content;
         this.imageUrl = imageUrl;
-        this.timestamp = new Date();
+        this.timestamp = LocalDateTime.now();
     }
 
+    // Getters and setters
     public String getMessageId() {
         return messageId;
     }
@@ -75,11 +82,11 @@ public class Message {
         this.imageUrl = imageUrl;
     }
 
-    public Date getTimestamp() {
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 }

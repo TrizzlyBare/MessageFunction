@@ -23,8 +23,7 @@ public class UserService {
         }
 
         // Check if username is already taken
-        User existingUser = userRepository.findByUsername(username);
-        if (existingUser != null) {
+        if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
 
@@ -46,11 +45,8 @@ public class UserService {
     }
 
     public User getUserById(String userId) {
-        User user = userRepository.findById(userId);
-        if (user == null) {
-            throw new IllegalArgumentException("User not found");
-        }
-        return user;
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     public List<User> getAllUsers() {

@@ -1,17 +1,16 @@
 package com.chatmessage.chat.config;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.media.FileSchema;
-import io.swagger.v3.oas.models.parameters.Parameter;
-
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.FileSchema;
+import io.swagger.v3.oas.models.media.Schema;
 
 @Configuration
 public class SwaggerConfig {
@@ -30,7 +29,7 @@ public class SwaggerConfig {
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0")));
     }
-    
+
     @Bean
     public OpenApiCustomizer consumerTypeCustomizer() {
         return openApi -> {
@@ -40,7 +39,7 @@ public class SwaggerConfig {
                 components = new Components();
                 openApi.components(components);
             }
-            
+
             // Add a schema for file uploads
             Schema<?> fileSchema = new FileSchema();
             components.addSchemas("FileUpload", fileSchema);

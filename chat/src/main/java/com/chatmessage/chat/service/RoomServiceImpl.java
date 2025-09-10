@@ -3,7 +3,6 @@ package com.chatmessage.chat.service;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.chatmessage.chat.model.Room;
@@ -14,7 +13,6 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
 
-    @Autowired
     public RoomServiceImpl(RoomRepository roomRepository) {
         this.roomRepository = roomRepository;
     }
@@ -39,11 +37,8 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public Room getRoomById(String userId, String roomId) {
-        Room room = roomRepository.findById(roomId);
-
-        if (room == null) {
-            throw new IllegalArgumentException("Room not found");
-        }
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
 
         if (!isUserInRoom(userId, roomId)) {
             throw new IllegalArgumentException("User is not a member of this room");
@@ -58,13 +53,14 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("User ID cannot be empty");
         }
 
-        return roomRepository.findByUserId(userId);
+        return roomRepository.findByMembersContaining(userId);
     }
 
     @Override
     public boolean isUserInRoom(String userId, String roomId) {
-        Room room = roomRepository.findById(roomId);
-        return room != null && room.isMember(userId);
+        return roomRepository.findById(roomId)
+                .map(room -> room.isMember(userId))
+                .orElse(false);
     }
 
     @Override

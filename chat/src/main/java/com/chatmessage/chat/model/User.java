@@ -1,8 +1,18 @@
 package com.chatmessage.chat.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "users")
 public class User {
 
+    @Id
     private String userId;
+
+    @Column(nullable = false, unique = true)
     private String username;
 
     public User() {
@@ -13,6 +23,7 @@ public class User {
         this.username = username;
     }
 
+    // Getters and setters
     public String getUserId() {
         return userId;
     }

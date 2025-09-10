@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9f7ef;
+            border-left: 4px solid #2ecc71;
+        }
+
+        img.preview {
+            max-width: 100%;
+            max-height: 200px;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>File Upload Examples</h1>
+    <p>This page demonstrates different ways to upload files using FormData.</p>
+
+    <div class="container">
+        <div class="form-section">
+            <h2>Test 1: Simple File Upload</h2>
+            <form id="simpleForm">
+                <div class="form-group">
+                    <label for="file1">Select file:</label>
+                    <input type="file" id="file1" name="file" accept="image/*">
+                </div>
+                <button type="submit">Upload</button>
+            </form>
+            <div id="response1" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Test 2: File Upload with Text</h2>
+            <form id="textFileForm">
+                <div class="form-group">
+                    <label for="text2">Message:</label>
+                    <input type="text" id="text2" placeholder="Enter message (optional)">
+                </div>
+                <div class="form-group">
+                    <label for="file2">Select file (optional):</label>
+                    <input type="file" id="file2" accept="image/*">
+                </div>
+                <button type="submit">Send</button>
+            </form>
+            <div id="response2" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="form-section" style="margin-top: 20px;">
+        <h2>Test 3: Full Message with Room</h2>
+        <form id="fullMessageForm">
+            <div class="form-group">
+                <label for="userId">User ID:</label>
+                <input type="text" id="userId" value="default-user">
+            </div>
+            <div class="form-group">
+                <label for="roomId">Room ID:</label>
+                <input type="text" id="roomId" required>
+            </div>
+            <div class="form-group">
+                <label for="content">Message:</label>
+                <textarea id="content" rows="3" placeholder="Enter message (optional if image provided)"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="file3">Image (optional if message provided):</label>
+                <input type="file" id="file3" name="image" accept="image/*">
+                <img id="preview3" class="preview" style="display: none;" alt="Preview">
+            </div>
+            <button type="submit">Send Message</button>
+        </form>
+        <div id="response3" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Simple file upload
+        document.getElementById('simpleForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file1');
+            const responseDiv = document.getElementById('response1');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                responseDiv.innerHTML = '<p style="color: red;">Please select a file</p>';
+                responseDiv.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/api/test/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    responseDiv.innerHTML = '<h3>Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    responseDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    responseDiv.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+                    responseDiv.style.display = 'block';
+                });
+        });
+
+        // Text with file upload
+        document.getElementById('textFileForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const text = document.getElementById('text2').value;
+            const fileInput = document.getElementById('file2');
+            const responseDiv = document.getElementById('response2');
+
+            if (!text && (!fileInput.files || fileInput.files.length === 0)) {
+                responseDiv.innerHTML = '<p style="color: red;">Please enter text or select a file</p>';
+                responseDiv.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            if (text) formData.append('text', text);
+            if (fileInput.files.length > 0) formData.append('file', fileInput.files[0]);
+
+            fetch('/api/test/message-test', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    responseDiv.innerHTML = '<h3>Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    responseDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    responseDiv.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+                    responseDiv.style.display = 'block';
+                });
+        });
+
+        // Full message form
+        document.getElementById('file3').addEventListener('change', function () {
+            const preview = document.getElementById('preview3');
+            const file = this.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        document.getElementById('fullMessageForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const userId = document.getElementById('userId').value;
+            const roomId = document.getElementById('roomId').value;
+            const content = document.getElementById('content').value;
+            const fileInput = document.getElementById('file3');
+            const responseDiv = document.getElementById('response3');
+
+            if (!roomId) {
+                responseDiv.innerHTML = '<p style="color: red;">Room ID is required</p>';
+                responseDiv.style.display = 'block';
+                return;
+            }
+
+            if (!content && (!fileInput.files || fileInput.files.length === 0)) {
+                responseDiv.innerHTML = '<p style="color: red;">Either message content or image is required</p>';
+                responseDiv.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            if (content) formData.append('content', content);
+            if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
+
+            const url = `/api/messages?userId=${encodeURIComponent(userId)}&roomId=${encodeURIComponent(roomId)}`;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    responseDiv.innerHTML = '<h3>Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+
+                    if (data.imageUrl) {
+                        responseDiv.innerHTML += `<h3>Uploaded Image:</h3><img src="${data.imageUrl}" style="max-width: 100%;">`;
+                    }
+
+                    responseDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    responseDiv.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+                    responseDiv.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+
+</html>
